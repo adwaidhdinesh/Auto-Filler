@@ -2,12 +2,13 @@
 
 An AI-powered Chrome extension that scans Google Forms, understands different question types, and uses user data, context, AI, and web research to generate and fill relevant answers.
 
-The current checked-in code is **Phase 1 — Form Scanner**, which does *only* detection and extraction. No AI, no autofill:
+The current checked-in code covers **Phase 1 — Form Scanner** (detection + extraction) and **Phase 2 — Question Classification** (rule-based normalization). Still no AI, no autofill:
 
 - No AI
 - No answer generation
 - No autofill
 - No submission
+- No network calls
 
 Everything later in the roadmap (local autofill, AI classification, user
 context, generated answers) builds on top of this schema, so it needs to be
@@ -15,31 +16,37 @@ reliable first.
 
 ## Load it
 
-1. Go to `chrome://extensions`
-2. Turn on **Developer mode** (top right)
-3. Click **Load unpacked**
-4. Select this `extension/` folder
-5. Open any Google Form (`docs.google.com/forms/...`)
-6. Click the extension icon → **Scan form**
+Prerequisites: Node.js 20+.
 
-The output looks like:
+1. `npm install`
+2. `npm run build` (compiles the Phase 2 analyzer into `phase2/dist/`)
+3. Go to `chrome://extensions`
+4. Turn on **Developer mode** (top right)
+5. Click **Load unpacked**
+6. Select this `extension/` folder
+7. Open any Google Form (`docs.google.com/forms/...`)
+8. Click the extension icon → **Scan form**
+
+The popup shows the **Normalized** (Phase 2) view by default and can switch
+to **Raw (Phase 1)**.
+
+The raw output (Phase 1) looks like:
 
 ```json
 {
   "formTitle": "Event Registration",
   "url": "https://docs.google.com/forms/d/e/.../viewform",
   "scannedAt": "2026-08-29T16:31:00.000Z",
-  "questionCount": 3,
+  "questionCount": 2,
   "questions": [
     { "id": "q1", "label": "Full Name", "type": "text", "required": true },
     {
       "id": "q2",
-      "label": "T-shirt size",
+      "label": "Which protocol is used for secure web communication?",
       "type": "radio",
-      "required": false,
-      "options": ["S", "M", "L", "XL"]
-    },
-    { "id": "q3", "label": "Anything else we should know?", "type": "paragraph", "required": false }
+      "required": true,
+      "options": ["HTTP", "FTP", "HTTPS", "SMTP"]
+    }
   ]
 }
 ```
@@ -55,13 +62,81 @@ This is DOM-structure based, not class-name based, since Google's CSS class
 names are obfuscated and change across deploys — ARIA roles are far more
 stable.
 
-## Known limitations (fine for Phase 1)
+## Phase 2 — Question Classification & Understanding
+
+`analyzeForm(rawFormJson)` (in `phase2/index.ts`) turns the raw scan into a
+normalized, classified form. The pipeline is modular:
+
+```text
+Phase 1 JSON
+  -> typeClassifier   (normalized type: TEXT, EMAIL, NUMBER, SCALE, ...)
+  -> categoryClassifier (PERSONAL_DATA, KNOWLEDGE, USER_CONTEXT, ...)
+  -> fieldClassifier    (NAME, EMAIL, PHONE, UNIVERSITY, REFERENCE_NUMBER, ...)
+  -> questionNormalizer (assembles AnalyzedQuestion + per-question warnings)
+  -> validateAnalyzedForm (schema checks; throws AnalysisError on hard issues)
+  -> AnalyzedForm
+```
+
+Rules are data, centralized in `phase2/rules/keywords.ts` (label text is
+normalized and singularized before matching, so synonyms and plurals work).
+Every classification carries a deterministic confidence in [0,1]; anything
+below `CLASSIFY_THRESHOLD` (0.5) becomes `UNKNOWN` with `needsAI: true`
+instead of a guessed answer. The analyzer is pure and local: no AI, no
+network, no storage of user values, no logging of labels.
+
+Normalized question example:
+
+```json
+{
+  "id": "q1",
+  "label": "Contact No.",
+  "type": "TEXT",
+  "originalType": "text",
+  "category": "PERSONAL_DATA",
+  "field": "PHONE",
+  "options": [],
+  "required": true,
+  "typeConfidence": 0.95,
+  "categoryConfidence": 0.87,
+  "fieldConfidence": 0.87,
+  "confidence": 0.9,
+  "needsAI": false,
+  "warnings": [],
+  "matchedTerms": { "category": ["contact no"], "field": ["contact no"] }
+}
+```
+
+Normalized types: `TEXT PARAGRAPH RADIO CHECKBOX DROPDOWN DATE TIME NUMBER
+EMAIL FILE_UPLOAD SCALE GRID UNKNOWN`
+
+Categories: `PERSONAL_DATA USER_CONTEXT KNOWLEDGE OPINION FEEDBACK PREFERENCE
+DATE_TIME REFERENCE_DATA UNKNOWN`
+
+Fields: `NAME EMAIL PHONE ADDRESS CITY STATE COUNTRY DATE TIME
+REFERENCE_NUMBER COLLEGE UNIVERSITY DEGREE OTHER NONE`
+
+The future Answer Engine consumes `AnalyzedForm` and never needs to know how
+the DOM scanner works.
+
+## Development commands
+
+```bash
+npm test         # run the Phase 2 unit tests (Node's built-in test runner)
+npm run typecheck   # strict TypeScript check, no emit
+npm run build       # compile TypeScript -> phase2/dist (required by the popup)
+```
+
+Run these from the repo root, after `npm install`.
+
+## Known limitations (Phases 1-2)
 
 - Multi-page forms: only scans the currently visible page/section. Re-run
   scan after clicking "Next."
-- File upload, linear scale, and grid questions aren't specifically typed yet —
-  they'll currently fall back to `"unknown"` (grids are detected via the
-  question's `[role="table"]` container and skipped).
+- File upload, linear scale, and grid questions aren't specifically typed by
+  the scanner; Phase 2 recovers upload/grid/scale from the label when it can,
+  otherwise they stay `"unknown"`.
+- Classification is English-keyword based; non-English forms will mostly
+  fall back to `UNKNOWN` until an AI fallback is added in a later phase.
 - Doesn't yet distinguish a question from a section description that
   happens to have heading-like markup. Rare, but possible false positive.
 
@@ -83,6 +158,6 @@ of form URLs you maintain, rather than "any Google Form").
 
 ## Next phase
 
-Phase 2 — Local Autofill: match detected `text` questions like "Full Name" /
-"Email" / "Phone" against a small profile stored in `chrome.storage.local`
+Phase 3 — Local Autofill: match detected `field` values like NAME / EMAIL /
+PHONE / UNIVERSITY against a small profile stored in `chrome.storage.local`
 and fill them directly. Still no AI.

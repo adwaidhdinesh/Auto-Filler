@@ -2,13 +2,57 @@ const output = document.getElementById("output");
 const countLabel = document.getElementById("count");
 const scanBtn = document.getElementById("scanBtn");
 const copyBtn = document.getElementById("copyBtn");
+const viewSelect = document.getElementById("view");
 
-function render(result) {
-  output.value = JSON.stringify(result, null, 2);
-  countLabel.textContent = result?.questionCount
-    ? `${result.questionCount} question${result.questionCount === 1 ? "" : "s"}`
-    : "";
+let rawResult = null;
+
+const NOT_BUILT_HINT =
+  "Phase 2 analyzer isn't built.\n\nRun `npm run build` in the repo, then " +
+  "reload the extension from chrome://extensions.\n\nShowing raw Phase 1 " +
+  "output instead:";
+
+function hasAnalyzer() {
+  return typeof window.AutoFiller?.analyzeForm === "function";
 }
+
+function analyzeResult(result) {
+  if (!hasAnalyzer()) return { ok: false, error: "not built" };
+  try {
+    return { ok: true, result: window.AutoFiller.analyzeForm(result) };
+  } catch (err) {
+    return { ok: false, error: String(err) };
+  }
+}
+
+function questionCount(n) {
+  return `${n} question${n === 1 ? "" : "s"}`;
+}
+
+function renderView() {
+  if (!rawResult) return;
+
+  const count = questionCount(rawResult.questionCount);
+
+  if (viewSelect.value === "normalized") {
+    const analysis = analyzeResult(rawResult);
+    if (analysis.ok) {
+      output.value = JSON.stringify(analysis.result, null, 2);
+      countLabel.textContent = `${count} · normalized`;
+    } else if (analysis.error === "not built") {
+      output.value = NOT_BUILT_HINT + "\n\n" + JSON.stringify(rawResult, null, 2);
+      countLabel.textContent = "";
+    } else {
+      output.value = "Analysis failed: " + analysis.error + "\n\n" + JSON.stringify(rawResult, null, 2);
+      countLabel.textContent = "";
+    }
+    return;
+  }
+
+  output.value = JSON.stringify(rawResult, null, 2);
+  countLabel.textContent = count;
+}
+
+viewSelect.addEventListener("change", renderView);
 
 async function requestScan() {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -17,6 +61,7 @@ async function requestScan() {
     output.value =
       "Not a Google Form.\n\nOpen a form at docs.google.com/forms/... and try again.";
     countLabel.textContent = "";
+    rawResult = null;
     return;
   }
 
@@ -26,12 +71,16 @@ async function requestScan() {
         "Couldn't reach the page.\n\nReload the form tab and try again:\n" +
         chrome.runtime.lastError.message;
       countLabel.textContent = "";
+      rawResult = null;
       return;
     }
     if (response?.ok) {
-      render(response.result);
+      rawResult = response.result;
+      renderView();
     } else {
       output.value = "Scan failed: " + (response?.error || "unknown error");
+      countLabel.textContent = "";
+      rawResult = null;
     }
   });
 }
@@ -73,5 +122,8 @@ copyBtn.addEventListener("click", async () => {
 chrome.storage.local.get("lastScan", async (data) => {
   if (!data.lastScan) return;
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  if (tab && tab.url === data.lastScan.url) render(data.lastScan);
+  if (tab && tab.url === data.lastScan.url) {
+    rawResult = data.lastScan;
+    renderView();
+  }
 });

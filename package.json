@@ -1,0 +1,16 @@
+{
+  "name": "auto-filler",
+  "version": "0.2.0",
+  "private": true,
+  "description": "Chrome extension Phase 2: rule-based question classification & normalization for Google Forms (no AI).",
+  "type": "module",
+  "scripts": {
+    "test": "node --test \"phase2/tests/*.test.ts\"",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "build": "tsc -p tsconfig.json"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.3",
+    "typescript": "^5.9.3"
+  }
+}

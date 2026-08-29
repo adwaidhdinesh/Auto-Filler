@@ -61,6 +61,17 @@
     color: white;
   }
   button:active { transform: translateY(1px); }
+  select {
+    font-family: var(--sans);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 6px 8px;
+    border-radius: 6px;
+    border: 1px solid var(--line);
+    background: white;
+    color: var(--ink);
+    cursor: pointer;
+  }
   #count {
     font-size: 11.5px;
     color: var(--accent);
@@ -99,11 +110,16 @@
     <div class="row">
       <button id="scanBtn" class="primary">Scan form</button>
       <button id="copyBtn">Copy JSON</button>
+      <select id="view" title="Output format">
+        <option value="normalized">Normalized</option>
+        <option value="raw">Raw (Phase 1)</option>
+      </select>
       <span id="count"></span>
     </div>
     <textarea id="output" readonly placeholder="Open a Google Form, then click Scan form."></textarea>
-    <div class="hint">Runs only on docs.google.com/forms pages.</div>
+    <div class="hint">Runs only on docs.google.com/forms pages. Phase 2 is local only — no AI, no network.</div>
   </main>
   <script src="popup.js"></script>
+  <script type="module" src="phase2.entry.js"></script>
 </body>
 </html>
