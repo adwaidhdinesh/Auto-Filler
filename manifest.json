@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "Form Scanner (Phase 1)",
+  "version": "0.1.0",
+  "description": "Scans a Google Form and extracts a structured question schema. Detection only \u2014 no AI, no autofill, no answers.",
+  "permissions": ["activeTab", "scripting", "storage", "tabs", "clipboardWrite"],
+  "host_permissions": ["https://docs.google.com/forms/*"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Form Scanner"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://docs.google.com/forms/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
