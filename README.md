@@ -1,18 +1,35 @@
-# Auto-Filler
+<div align="center">
 
-An AI-powered Chrome extension that scans Google Forms, understands different question types, and uses user data, context, AI, and web research to generate and fill relevant answers.
+# 🤖 Auto-Filler
 
-The current checked-in code covers **Phase 1 — Form Scanner** (detection + extraction) and **Phase 2 — Question Classification** (rule-based normalization). Still no AI, no autofill:
+**AI-powered Google Forms Assistant (Chrome Extension)**
 
-- No AI
-- No answer generation
-- No autofill
-- No submission
-- No network calls
+Scans Google Forms, understands different question types, and — in future phases — generates and fills relevant answers using user data, context, and AI.
 
-Everything later in the roadmap (local autofill, AI classification, user
-context, generated answers) builds on top of this schema, so it needs to be
-reliable first.
+`TypeScript` · `Chrome Extension` · `AI`
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
+[![TypeScript](https://img.shields.io/badge/TypeScript-3178C6.svg?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Node 20+](https://img.shields.io/badge/Node-20%2B-339933.svg?logo=nodedotjs&logoColor=white)](https://nodejs.org/)
+![Status](https://img.shields.io/badge/Status-Phase%202%20(Scanner%20%2B%20Classification)-blue.svg)
+
+</div>
+
+---
+
+## 📍 Project Status
+
+**Currently: Phase 2 — Form Scanner + Question Classification** (rule-based normalization)
+
+- ✅ Phase 1: Form detection + extraction
+- ✅ Phase 2: Question classification (rule-based)
+- ⏳ Phase 3: Local autofill (planned)
+- ⏳ Phase 4: AI classification fallback (planned)
+- ⏳ Phase 5: AI-generated answers (planned)
+
+> **Important:** No AI, no answer generation, no autofill, no submission, and no network calls yet. The schema is being built reliably first so later phases can build on a solid foundation.
+
+---
 
 ## Load it
 
@@ -161,3 +178,22 @@ of form URLs you maintain, rather than "any Google Form").
 Phase 3 — Local Autofill: match detected `field` values like NAME / EMAIL /
 PHONE / UNIVERSITY against a small profile stored in `chrome.storage.local`
 and fill them directly. Still no AI.
+
+---
+
+## ⚖️ Ethical Use
+
+This project is designed as a **productivity tool** for repetitive personal forms (job applications, event signups, contact forms, surveys).
+
+It is **NOT** intended for:
+- Auto-completing graded quizzes, exams, or certification tests
+- Academic fraud of any kind
+- Bypassing form security or CAPTCHA protections
+
+Future AI-answer phases should be scoped with an allowlist of permitted form URLs. Use responsibly.
+
+---
+
+## License
+
+MIT License — see [LICENSE](LICENSE).
