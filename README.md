@@ -2,11 +2,11 @@
 
 # 🤖 Auto-Filler
 
-**AI-powered Google Forms Assistant (Chrome Extension)**
+**Local Google Forms Scanner and Classifier (Chrome Extension)**
 
-Scans Google Forms, understands different question types, and — in future phases — generates and fills relevant answers using user data, context, and AI.
+Scans Google Forms and classifies question types locally with deterministic rules. Autofill and AI-powered features are planned; the current version does not generate or enter answers.
 
-`TypeScript` · `Chrome Extension` · `AI`
+`TypeScript` · `Chrome Extension` · `Google Forms` · `Local Analysis`
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6.svg?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
@@ -40,7 +40,7 @@ Prerequisites: Node.js 20+.
 3. Go to `chrome://extensions`
 4. Turn on **Developer mode** (top right)
 5. Click **Load unpacked**
-6. Select this `extension/` folder
+6. Select the repository folder that contains `manifest.json`
 7. Open any Google Form (`docs.google.com/forms/...`)
 8. Click the extension icon → **Scan form**
 

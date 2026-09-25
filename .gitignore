@@ -1,7 +1,7 @@
 # Local user profile / personal data (never commit real form data)
 profile.json
 
-# Node.js (only matters once a build/test step is added)
+# Node.js dependencies and generated output
 node_modules/
 dist/
 coverage/
